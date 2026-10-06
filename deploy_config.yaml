@@ -1,0 +1,9 @@
+applications:
+  - name: forecast_v1
+    import_path: forecast_rayserve:forecast_app
+    route_prefix: /
+    traffic_split: 0.9
+  - name: forecast_v2
+    import_path: forecast_rayserve_v2:forecast_app
+    route_prefix: /v2
+    traffic_split: 0.1
