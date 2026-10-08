@@ -10,23 +10,23 @@ import logging
 
 logger = logging.getLogger("ray.serve")
 
-# --- 1. 從 MLflow Registry Load Model（用 Alias 或最新 Version） ---
+# --- 1. Load a model from the MLflow Registry using an alias or the latest version. ---
 def load_model_with_fallback(model_name="ForecastModel", alias="production"):
     mlflow.set_tracking_uri("http://localhost:5000")
     try:
         client = MlflowClient()
-        # 首先嘗試用 Alias 去 Load
+        # First try to load the model by alias.
         try:
             model_version = client.get_model_version_by_alias(model_name, alias)
             version_number = model_version.version
             logger.info(f"Found model with alias '{alias}': Version {version_number}")
         except Exception as alias_error:
-            # 如果 Alias 唔存在，就 Load 最新 Version
+            # If the alias does not exist, load the latest version.
             logger.info(f"Alias '{alias}' not found, falling back to latest version...")
             latest_versions = client.get_latest_versions(model_name)
             if not latest_versions:
                 raise Exception(f"No versions found for model {model_name}")
-            # 用最新 Version (Version Number 最大嗰個)
+            # Use the latest version (the highest version number).
             latest = max(latest_versions, key=lambda v: int(v.version))
             version_number = latest.version
             logger.info(f"Loaded latest version: {version_number}")
@@ -43,7 +43,7 @@ def load_model_with_fallback(model_name="ForecastModel", alias="production"):
         with open("dummy_forecast_model.pkl", "rb") as f:
             return pickle.load(f)
 
-# Load Model (會嘗試用 "production" Alias，如果冇就用最新 Version)
+# Load the model, preferring the "production" alias and falling back to the latest version.
 model = load_model_with_fallback(model_name="ForecastModel", alias="production")
 
 # --- 2. FastAPI App ---
@@ -111,5 +111,5 @@ class ForecastModel:
             }
         }
 
-# --- 4. 綁定 Deploy ---
+# --- 4. Bind the deployment. ---
 forecast_app = ForecastModel.bind()

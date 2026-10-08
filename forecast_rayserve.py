@@ -27,40 +27,40 @@ class ForecastModel:
     def __init__(self):
         self.model = model
 
-    # 注意：呢度嘅縮排正確，屬於 Class 入面
+    # This indentation is intentional because the code belongs to the class.
     @serve.batch(max_batch_size=4, batch_wait_timeout_s=0.2)
     async def predict_batch(self, requests):
-        # 如果冇 Request 就早啲返返去
+        # Return early when no request is supplied.
         if not requests:
             return []
         
-        # 確保每一個 Request 都有 temperature 呢個 attribute
+        # Ensure that every request has a ``temperature`` attribute.
         temperatures = []
         for req in requests:
             if hasattr(req, 'temperature'):
                 temperatures.append(req.temperature)
             else:
-                # 如果冇 temperature，用一個預設值
+                # Use a default value when ``temperature`` is absent.
                 temperatures.append(20.0)
         
-        # 轉做 Numpy Array 做 Prediction
+        # Convert the input to a NumPy array for prediction.
         temperatures_np = np.array(temperatures).reshape(-1, 1)
         predictions = self.model.predict(temperatures_np)
         return predictions.tolist()
 
     @app.post("/forecast")
     async def predict(self, request: ForecastRequest):
-        # 直接將 request 放入 batch queue
+        # Add the request directly to the batch queue.
         batch_result = await self.predict_batch(request)
         
-        # 安全檢查：確保 batch_result 係一個 list 而且有內容
+        # Ensure that ``batch_result`` is a non-empty list.
         if isinstance(batch_result, list) and len(batch_result) > 0:
             return {"prediction": batch_result[0]}
         else:
-            # Fallback 機制：如果 batch 回傳嘅格式有問題，直接用 model 做 prediction
+            # Fall back to direct model prediction if the batch response format is invalid.
             features = np.array([[request.temperature]])
             prediction = self.model.predict(features)
             return {"prediction": prediction[0], "note": "fallback"}
 
-# 呢行一定要喺 Class 嘅外面，同埋係最底
+# This line must remain outside the class definition and at the end of the file.
 forecast_app = ForecastModel.bind()

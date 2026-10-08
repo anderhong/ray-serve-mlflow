@@ -2,10 +2,10 @@ from ray import serve
 from fastapi import FastAPI
 import ray
 
-# 初始化 Ray
+# Initialize Ray.
 ray.init()
 
-# 建立一個 FastAPI app
+# Create a FastAPI application.
 app = FastAPI()
 
 @serve.deployment
@@ -15,5 +15,5 @@ class HelloWorld:
     async def say_hello(self):
         return {"message": "Hello from Ray Serve! You're doing great!"}
 
-# 將個 Deployment 綁定
+# Bind the deployment.
 hello_app = HelloWorld.bind()
